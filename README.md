@@ -1,7 +1,37 @@
 # HigherOrderKernels
 
-[![Build Status](https://travis-ci.org/Godisemo/HigherOrderKernels.jl.svg?branch=master)](https://travis-ci.org/Godisemo/HigherOrderKernels.jl)
+This package provides basic kernel density estimation using *higher order kernels* also known as *bias reducing kernels*.
+At the moment only kernels from the polynomial family described in [1]. This includes some widely used kernels:
 
-[![Coverage Status](https://coveralls.io/repos/Godisemo/HigherOrderKernels.jl/badge.svg?branch=master&service=github)](https://coveralls.io/github/Godisemo/HigherOrderKernels.jl?branch=master)
+* Uniform
+* Epanechnikov
+* Biweight
+* Triweight
 
-[![codecov.io](http://codecov.io/github/Godisemo/HigherOrderKernels.jl/coverage.svg?branch=master)](http://codecov.io/github/Godisemo/HigherOrderKernels.jl?branch=master)
+and higher order versions. Kernel code is generated automatically, so any order is possible.
+
+For bandwidht selection, Silverman's rule-of-thumb is implemented for all kernels.
+
+# Example
+
+```julia
+using HigherOrderKernels
+using Plots
+using Distributions
+
+data = randn(10000)
+xgrid = linspace(-2, 2, 100)
+plt = plot()
+for ν = 2:2:8
+  k = EpanechnikovKernel{ν}
+  h = bandwidth(k, data)
+  p = kpdf.(k, xgrid, [data], h)
+  plot!(plt, xgrid, p, label="Order $ν")
+end
+plot!(x -> pdf(Normal(), x), label="Exact")
+```
+
+![](example.svg)
+
+# References
+1 Hansen, B. E. (2005). EXACT MEAN INTEGRATED SQUARED ERROR OF HIGHER ORDER KERNEL ESTIMATORS. Econometric Theory, 21(6), 1031–1057. http://doi.org/10.1017/S0266466605050528
