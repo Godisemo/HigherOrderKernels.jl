@@ -34,4 +34,4 @@ plot!(x -> pdf(Normal(), x), label="Exact")
 ![](example.svg)
 
 # References
-1 Hansen, B. E. (2005). EXACT MEAN INTEGRATED SQUARED ERROR OF HIGHER ORDER KERNEL ESTIMATORS. Econometric Theory, 21(6), 1031–1057. http://doi.org/10.1017/S0266466605050528
+1. Hansen, B. E. (2005). EXACT MEAN INTEGRATED SQUARED ERROR OF HIGHER ORDER KERNEL ESTIMATORS. Econometric Theory, 21(6), 1031–1057. http://doi.org/10.1017/S0266466605050528

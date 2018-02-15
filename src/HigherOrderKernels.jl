@@ -6,7 +6,8 @@ export PolynomialKernel,
        BiweightKernel,
        TriweightKernel,
        bandwidth,
-       kpdf
+       kpdf,
+       order
 
 using GaussQuadrature
 
@@ -16,6 +17,8 @@ const UniformKernel = PolynomialKernel{0}
 const EpanechnikovKernel = PolynomialKernel{1}
 const BiweightKernel = PolynomialKernel{2}
 const TriweightKernel = PolynomialKernel{3}
+
+order(::Type{T}) where {ν,T<:AbstractKernel{ν}} = ν
 
 const bandwidth_constant_lookup = Dict{Type{T} where T<:AbstractKernel,Float64}()
 
