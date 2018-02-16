@@ -32,8 +32,8 @@ function bandwidth_constant(k::Type{T}) where {s,ν,T<:PolynomialKernel{s,ν}}
   x, w = legendre(N)
   R = sum(w[i] * kernel(k, x[i])^2 for i=1:N)
   κ = sum(w[i] * x[i]^ν * kernel(k, x[i]) for i=1:N)
-  C = 2*((sqrt(pi)*factorial(ν)^3*R)/(2*ν*factorial(2*ν)*κ^2))^(1/(2*ν+1))
-  bandwidth_constant_lookup[k] = C
+  C = 2*((sqrt(pi)*factorial(BigInt(ν))^3*R)/(2*ν*factorial(BigInt(2ν))*κ^2))^(1/(2ν+1))
+  bandwidth_constant_lookup[k] = Float64(C)
 end
 
 bandwidth(k::Type{T}, data) where {ν,T<:AbstractKernel{ν}} =
