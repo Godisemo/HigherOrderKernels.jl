@@ -13,6 +13,8 @@ and higher order versions. Kernel code is generated automatically, so any order 
 
 For bandwidht selection, Silverman's rule-of-thumb is implemented for all kernels.
 
+![](kernels.svg)
+
 # Example
 
 ```julia
