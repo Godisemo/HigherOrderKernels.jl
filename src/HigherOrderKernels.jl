@@ -44,19 +44,22 @@ pochhammer(x, n) = iszero(n) ? one(x) : prod(x+j for j=0:n-1)
 @generated function kernel(::Type{PolynomialKernel{s,ν}}, u) where {s,ν}
   r = div(ν, 2)
   M_constant = pochhammer(1/2, s+1) / factorial(s)
-  M_expr = :((1-u^2)^$s*(abs(u) <= 1))
+  M_expr = :((1-u2)^$s*(abs(u) <= 1))
   B_constant = pochhammer(3/2, r-1) * pochhammer(3/2+s, r-1) / pochhammer(s+1, r-1)
   B_coefficients = [(-1)^k * pochhammer(1/2+s+r, k) / (factorial(k) * factorial(r-1-k) * pochhammer(3/2, k)) for k=0:r-1]
-  B_expr = Expr(:call, :+, (:($(B_coefficients[r+1])*u^$(2r)) for r=0:r-1)...)
+  B_expr = Expr(:call, :+, (:($(B_coefficients[r+1])*u2^$r) for r=0:r-1)...)
   expr = Expr(:call, :*, B_constant*M_constant, B_expr, M_expr)
   quote
     $(Expr(:meta, :inline))
+    u2 = u^2
     $expr
   end
 end
 
-function kpdf(::Type{T}, x, data, h=bandwidth(T, data)) where {T<:AbstractKernel}
-  sum = zero(x)
+kpdf(k, x, data) = kpdf(k, x, data, bandwidth(k, data))
+
+function kpdf(::Type{T}, x, data, h) where {T<:AbstractKernel}
+  sum::Float64 = 0.0
   @simd for y in data
     sum += kernel(T, (y - x) / h)
   end
