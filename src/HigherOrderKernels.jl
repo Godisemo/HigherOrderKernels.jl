@@ -54,23 +54,36 @@ function bandwidth_constant(k::Type{T}) where {ν,T<:AbstractKernel{ν}}
   end
   R = roughness(k)
   κ = firstnzmoment(k)
-  C = 2*((sqrt(pi)*factorial(BigInt(ν))^3*R)/(2*ν*factorial(BigInt(2ν))*κ^2))^(1/(2ν+1))
-  bandwidth_constant_lookup[k] = Float64(C)
+  C = Float64(2*((sqrt(pi)*factorial(big(ν))^3*R)/(2*ν*factorial(big(2ν))*κ^2))^(1/(2ν+1)))
+  bandwidth_constant_lookup[k] = C
 end
 
 bandwidth(k::Type{T}, data) where {ν,T<:AbstractKernel{ν}} =
   bandwidth_constant(k) * std(data) * size(data, 1)^(-1/(2ν+1))
 
-pochhammer(x, n) = iszero(n) ? one(x) : prod(x+j for j=0:n-1)
+pochhammer(x, n) = gamma(x + n) / gamma(x)
 
 @generated function kernel(::Type{PolynomialKernel{s,ν}}, u) where {s,ν}
-  r = BigInt(div(ν, 2))
-  M_constant = pochhammer(1/2, s+1) / factorial(s)
-  M_expr = :((1-u2)^$s*(abs(u) <= 1))
-  B_constant = Float64(pochhammer(3/2, r-1) * pochhammer(3/2+s, r-1) / pochhammer(s+1, r-1))
-  B_coefficients = Float64.([(-1)^k * pochhammer(1/2+s+r, k) / (factorial(k) * factorial(r-1-k) * pochhammer(3/2, k)) for k=0:r-1])
-  B_expr = Expr(:call, :+, (:($(B_coefficients[r+1])*u2^$r) for r=0:r-1)...)
-  expr = Expr(:call, :*, B_constant*M_constant, B_expr, M_expr)
+  r = div(ν, 2)
+  M_constant = pochhammer(big(1/2), s+1) / factorial(big(s))
+  M_expr = (s == 0) ? :(abs(u) <= 1) :
+           (s == 1) ? :((1-u2)*(abs(u) <= 1)) :
+                      :((1-u2)^$s*(abs(u) <= 1))
+  if r == 1
+    expr = :($(Float64(M_constant)) * $M_expr)
+  else
+    B_constant = pochhammer(big(3/2+s), r-1) / pochhammer(big(s+1), r-1) * pochhammer(big(3/2), r-1)
+    B_coefficients = Float64.(B_constant * M_constant * [pochhammer(big(1/2+s+r), k) / (factorial(big(k)) * factorial(big(r-1-k)) * pochhammer(big(3/2), k)) for k=0:r-1])
+    expr = :($(B_coefficients[1]) - $(B_coefficients[2])*u2)
+    for i = 2:r-1
+      if iseven(i)
+        expr = :($expr + $(B_coefficients[i+1])*u2^$i)
+      else
+        expr = :($expr - $(B_coefficients[i+1])*u2^$i)
+      end
+    end
+    expr = :($expr * $M_expr)
+  end
   quote
     $(Expr(:meta, :inline))
     u2 = u^2
@@ -79,12 +92,22 @@ pochhammer(x, n) = iszero(n) ? one(x) : prod(x+j for j=0:n-1)
 end
 
 @generated function kernel(::Type{GaussianKernel{ν}}, u) where {ν}
-  r = BigInt(div(ν, 2))
+  r = div(ν, 2)
   ϕ_expr = :(exp(-u2/2)/sqrt(2*pi))
-  r = BigInt(div(ν, 2))
-  Q_coefficients = Float64.([(-1)^i*factorial(2r)/(2^(2r-i-1)*factorial(r)*factorial(2i+1)*factorial(r-i-1)) for i=0:r-1])
-  Q_expr = Expr(:call, :+, (:($(Q_coefficients[r+1])*u2^$r) for r=0:r-1)...)
-  expr = Expr(:call, :*, Q_expr, ϕ_expr)
+  if r == 1
+    expr = ϕ_expr
+  else
+    Q_coefficients = Float64.([factorial(big(2r))/(big(2)^(2r-i-1)*factorial(big(r))*factorial(big(2i+1))*factorial(big(r-i-1))) for i=0:r-1])
+    expr = :($(Q_coefficients[1]) - $(Q_coefficients[2])*u2)
+    for i = 2:r-1
+      if iseven(i)
+        expr = :($expr + $(Q_coefficients[i+1])*u2^$i)
+      else
+        expr = :($expr - $(Q_coefficients[i+1])*u2^$i)
+      end
+    end
+    expr = :($expr * $ϕ_expr)
+  end
   quote
     $(Expr(:meta, :inline))
     u2 = u^2
@@ -95,7 +118,7 @@ end
 kpdf(k, x, data) = kpdf(k, x, data, bandwidth(k, data))
 
 function kpdf(::Type{T}, x, data, h) where {T<:AbstractKernel}
-  sum::Float64 = 0.0
+  sum = 0.0
   @simd for y in data
     sum += kernel(T, (y - x) / h)
   end
