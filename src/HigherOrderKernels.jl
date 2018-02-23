@@ -63,6 +63,20 @@ bandwidth(k::Type{T}, data) where {ν,T<:AbstractKernel{ν}} =
 
 pochhammer(x, n) = gamma(x + n) / gamma(x)
 
+# efficient evaluation of polynomial using Horner's rule
+function polyval_expr(p::AbstractArray{T,1}, x::S) where {T,S}
+  lenp = length(p)
+  if lenp == 0
+    return zero(T) * x
+  else
+    y = convert(T, p[end])
+    for i = lenp-1:-1:1
+      y = :($(p[i]) + $x*$y)
+    end
+    return y
+  end
+end
+
 @generated function kernel(::Type{PolynomialKernel{s,ν}}, u) where {s,ν}
   r = div(ν, 2)
   M_constant = pochhammer(big(1/2), s+1) / factorial(big(s))
@@ -73,15 +87,8 @@ pochhammer(x, n) = gamma(x + n) / gamma(x)
     expr = :($(Float64(M_constant)) * $M_expr)
   else
     B_constant = pochhammer(big(3/2+s), r-1) / pochhammer(big(s+1), r-1) * pochhammer(big(3/2), r-1)
-    B_coefficients = Float64.(B_constant * M_constant * [pochhammer(big(1/2+s+r), k) / (factorial(big(k)) * factorial(big(r-1-k)) * pochhammer(big(3/2), k)) for k=0:r-1])
-    expr = :($(B_coefficients[1]) - $(B_coefficients[2])*u2)
-    for i = 2:r-1
-      if iseven(i)
-        expr = :($expr + $(B_coefficients[i+1])*u2^$i)
-      else
-        expr = :($expr - $(B_coefficients[i+1])*u2^$i)
-      end
-    end
+    B_coefficients = Float64.(B_constant * M_constant * [(-1)^k * pochhammer(big(1/2+s+r), k) / (factorial(big(k)) * factorial(big(r-1-k)) * pochhammer(big(3/2), k)) for k=0:r-1])
+    expr = polyval_expr(B_coefficients, :u2)
     expr = :($expr * $M_expr)
   end
   quote
@@ -97,15 +104,8 @@ end
   if r == 1
     expr = ϕ_expr
   else
-    Q_coefficients = Float64.([factorial(big(2r))/(big(2)^(2r-i-1)*factorial(big(r))*factorial(big(2i+1))*factorial(big(r-i-1))) for i=0:r-1])
-    expr = :($(Q_coefficients[1]) - $(Q_coefficients[2])*u2)
-    for i = 2:r-1
-      if iseven(i)
-        expr = :($expr + $(Q_coefficients[i+1])*u2^$i)
-      else
-        expr = :($expr - $(Q_coefficients[i+1])*u2^$i)
-      end
-    end
+    Q_coefficients = Float64.([(-1)^i * factorial(big(2r))/(big(2)^(2r-i-1)*factorial(big(r))*factorial(big(2i+1))*factorial(big(r-i-1))) for i=0:r-1])
+    expr = polyval_expr(Q_coefficients, :u2)
     expr = :($expr * $ϕ_expr)
   end
   quote
