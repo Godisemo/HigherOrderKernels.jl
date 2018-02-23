@@ -67,7 +67,7 @@ pochhammer(x, n) = gamma(x + n) / gamma(x)
 function polyval_expr(p::AbstractArray{T,1}, x::S) where {T,S}
   lenp = length(p)
   if lenp == 0
-    return zero(T) * x
+    return :($(zero(T)) * x)
   else
     y = convert(T, p[end])
     for i = lenp-1:-1:1
@@ -121,6 +121,28 @@ function kpdf(::Type{T}, x, data, h) where {T<:AbstractKernel}
   sum = 0.0
   @simd for y in data
     sum += kernel(T, (y - x) / h)
+  end
+  sum /= length(data) * h
+  return sum
+end
+
+function kpdf(::Type{T}, x, data, h, lb, ub) where {T<:AbstractKernel}
+  sum = 0.0
+  if !(lb <= x <= ub)
+    return sum
+  end
+  @simd for y in data
+    sum += kernel(T, (y - x) / h)
+  end
+  if isfinite(lb)
+    @simd for y in data
+      sum += kernel(T, (y - (2lb - x)) / h)
+    end
+  end
+  if isfinite(ub)
+    @simd for y in data
+      sum += kernel(T, (y - (2ub - x)) / h)
+    end
   end
   sum /= length(data) * h
   return sum
