@@ -71,7 +71,7 @@ function polyval_expr(p::AbstractArray{T,1}, x::S) where {T,S}
   else
     y = convert(T, p[end])
     for i = lenp-1:-1:1
-      y = :($(p[i]) + $x*$y)
+      y = :(muladd($x, $y, $(p[i])))
     end
     return y
   end
@@ -100,11 +100,11 @@ end
 
 @generated function kernel(::Type{GaussianKernel{ν}}, u) where {ν}
   r = div(ν, 2)
-  ϕ_expr = :(exp(-u2/2)/sqrt(2*pi))
+  ϕ_expr = :(exp(-0.5u2))
   if r == 1
-    expr = ϕ_expr
+    expr = :($(1/sqrt(2*pi))*$ϕ_expr)
   else
-    Q_coefficients = Float64.([(-1)^i * factorial(big(2r))/(big(2)^(2r-i-1)*factorial(big(r))*factorial(big(2i+1))*factorial(big(r-i-1))) for i=0:r-1])
+    Q_coefficients = Float64.([(-1)^i / sqrt(2*pi) * factorial(big(2r))/(big(2)^(2r-i-1)*factorial(big(r))*factorial(big(2i+1))*factorial(big(r-i-1))) for i=0:r-1])
     expr = polyval_expr(Q_coefficients, :u2)
     expr = :($expr * $ϕ_expr)
   end
@@ -119,7 +119,7 @@ kpdf(k, x, data) = kpdf(k, x, data, bandwidth(k, data))
 
 function kpdf(::Type{T}, x, data, h) where {T<:AbstractKernel}
   sum = 0.0
-  @simd for y in data
+  @fastmath @simd for y in data
     sum += kernel(T, (y - x) / h)
   end
   sum /= length(data) * h
