@@ -2,17 +2,17 @@ using HigherOrderKernels
 using GaussQuadrature
 using Base.Test
 
-import HigherOrderKernels: kernel, bandwidth_constant, roughness, firstnzmoment
+import HigherOrderKernels: density_kernel, density_bandwidth_constant, roughness, firstnzmoment
 
 for s = 0:20, ν = 2:2:20
     N = s + div(ν, 2)
     x, w = legendre(N)
-    @test kernel.(PolynomialKernel{s,ν}, x)'*w ≈ 1
+    @test density_kernel.(PolynomialKernel{s,ν}, x)'*w ≈ 1
 end
 
 for ν = 2:2:20
     N = div(ν, 2)
-    k = x -> kernel(GaussianKernel{ν}, x)
+    k = x -> density_kernel(GaussianKernel{ν}, x)
     x, w = hermite(N)
     @test sum(w[i]*k(sqrt(2)*x[i])*exp(x[i]^2) for i=1:N)*sqrt(2) ≈ 1
 end
@@ -50,15 +50,15 @@ end
 @test firstnzmoment(    GaussianKernel{6}) ≈ 15
 
 # table 4
-@test round(bandwidth_constant(PolynomialKernel{1,2}), 2) == 2.34
-@test round(bandwidth_constant(PolynomialKernel{1,4}), 2) == 3.03
-@test round(bandwidth_constant(PolynomialKernel{1,6}), 2) == 3.53
-@test round(bandwidth_constant(PolynomialKernel{2,2}), 2) == 2.78
-@test round(bandwidth_constant(PolynomialKernel{2,4}), 2) == 3.39
-@test round(bandwidth_constant(PolynomialKernel{2,6}), 2) == 3.84
-@test round(bandwidth_constant(PolynomialKernel{3,2}), 2) == 3.15
-@test round(bandwidth_constant(PolynomialKernel{3,4}), 2) == 3.72
-@test round(bandwidth_constant(PolynomialKernel{3,6}), 2) == 4.13
-@test round(bandwidth_constant(GaussianKernel{2}), 2) == 1.06
-@test round(bandwidth_constant(GaussianKernel{4}), 2) == 1.08
-@test round(bandwidth_constant(GaussianKernel{6}), 2) == 1.08
+@test round(density_bandwidth_constant(PolynomialKernel{1,2}), 2) == 2.34
+@test round(density_bandwidth_constant(PolynomialKernel{1,4}), 2) == 3.03
+@test round(density_bandwidth_constant(PolynomialKernel{1,6}), 2) == 3.53
+@test round(density_bandwidth_constant(PolynomialKernel{2,2}), 2) == 2.78
+@test round(density_bandwidth_constant(PolynomialKernel{2,4}), 2) == 3.39
+@test round(density_bandwidth_constant(PolynomialKernel{2,6}), 2) == 3.84
+@test round(density_bandwidth_constant(PolynomialKernel{3,2}), 2) == 3.15
+@test round(density_bandwidth_constant(PolynomialKernel{3,4}), 2) == 3.72
+@test round(density_bandwidth_constant(PolynomialKernel{3,6}), 2) == 4.13
+@test round(density_bandwidth_constant(GaussianKernel{2}), 2) == 1.06
+@test round(density_bandwidth_constant(GaussianKernel{4}), 2) == 1.08
+@test round(density_bandwidth_constant(GaussianKernel{6}), 2) == 1.08
