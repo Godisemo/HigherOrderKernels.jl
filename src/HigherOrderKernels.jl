@@ -14,7 +14,9 @@ export GaussianKernel,
        poly_order
 
 using GaussQuadrature,
-      Polynomials
+      Polynomials,
+      Statistics,
+      SpecialFunctions
 
 abstract type AbstractKernel{ν} end
 struct GaussianKernel{ν} <: AbstractKernel{ν} end
