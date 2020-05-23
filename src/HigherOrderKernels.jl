@@ -35,20 +35,20 @@ function roughness(k::Type{T}) where {s,ν,T<:PolynomialKernel{s,ν}}
   # N = 2s+2(div(ν,2)-1)+1
   # x, w = legendre(N)
   # R = sum(w[i] * density_kernel(k, x[i])^2 for i=1:N)
-  Float64(polyint(_u_poly(k)^2, -1, 1))
+  Float64(Polynomials.integrate(_u_poly(k)^2, -1, 1))
 end
 
 function distribution_roughness(k::Type{T}) where {s,ν,T<:PolynomialKernel{s,ν}}
-  I = polyint(_u_poly(k))
+  I = Polynomials.integrate(_u_poly(k))
   K = I - I(-1)
-  Float64(1 - polyint(K^2, -1, 1))
+  Float64(1 - Polynomials.integrate(K^2, -1, 1))
 end
 
 function firstnzmoment(k::Type{T}) where {s,ν,T<:PolynomialKernel{s,ν}}
   # N = s+2*div(ν,2)
   # x, w = legendre(N)
   # κ = sum(w[i] * x[i]^ν * density_kernel(k, x[i]) for i=1:N)
-  polyint(Poly([zeros(ν); 1]) * _u_poly(k), -1, 1)
+  Polynomials.integrate(Polynomial([zeros(ν); 1]) * _u_poly(k), -1, 1)
 end
 
 function roughness(k::Type{T}) where {ν,T<:GaussianKernel{ν}}
@@ -118,14 +118,14 @@ end
 function _u2_poly(::Type{PolynomialKernel{s,ν}}) where {s,ν}
   r = div(ν, 2)
   c = pochhammer(big(1/2), s+1) * pochhammer(big(3/2+s), r-1) * pochhammer(big(3/2), r-1) / factorial(big(s+r-1))
-  Poly([c * (-1)^k * pochhammer(big(1/2+s+r), k) / (factorial(big(k)) * factorial(big(r-1-k)) * pochhammer(big(3/2), k)) for k=0:r-1], :u2)
+  Polynomial([c * (-1)^k * pochhammer(big(1/2+s+r), k) / (factorial(big(k)) * factorial(big(r-1-k)) * pochhammer(big(3/2), k)) for k=0:r-1], :u2)
 end
 
 function _u_poly(k::Type{PolynomialKernel{s,ν}}) where {s,ν}
-  p0 = Poly([1, -1], :u2)^s
+  p0 = Polynomial([1, -1], :u2)^s
   p1 = _u2_poly(k)
   p = p0 * p1
-  u2 = Poly([0, 0, 1])
+  u2 = Polynomial([0, 0, 1])
   p(u2)
 end
 
@@ -144,7 +144,7 @@ end
 
 @generated function distribution_kernel(k::Type{PolynomialKernel{s,ν}}, u) where {s,ν}
   p = _u_poly(PolynomialKernel{s,ν})
-  P = polyint(p)
+  P = Polynomials.integrate(p)
   P -= P(-1)
   e = polyval_expr(Float64.(coeffs(P)), :u)
   quote
@@ -156,7 +156,7 @@ end
 @generated function density_kernel(::Type{GaussianKernel{ν}}, u) where {ν}
   r = div(ν, 2)
   ϕ = :(exp(-0.5u2))
-  p = Poly(Float64.([(-1)^i / sqrt(2*pi) * factorial(big(2r))/(big(2)^(2r-i-1)*factorial(big(r))*factorial(big(2i+1))*factorial(big(r-i-1))) for i=0:r-1]))
+  p = Polynomial(Float64.([(-1)^i / sqrt(2*pi) * factorial(big(2r))/(big(2)^(2r-i-1)*factorial(big(r))*factorial(big(2i+1))*factorial(big(r-i-1))) for i=0:r-1]))
   e = polyval_expr(coeffs(p), :u2)
   quote
     $(Expr(:meta, :inline))
