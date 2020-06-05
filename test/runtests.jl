@@ -1,6 +1,6 @@
 using HigherOrderKernels
 using GaussQuadrature
-using Base.Test
+using Test
 
 import HigherOrderKernels: density_kernel, density_bandwidth_constant, roughness, firstnzmoment
 
@@ -50,15 +50,15 @@ end
 @test firstnzmoment(    GaussianKernel{6}) ≈ 15
 
 # table 4
-@test round(density_bandwidth_constant(PolynomialKernel{1,2}), 2) == 2.34
-@test round(density_bandwidth_constant(PolynomialKernel{1,4}), 2) == 3.03
-@test round(density_bandwidth_constant(PolynomialKernel{1,6}), 2) == 3.53
-@test round(density_bandwidth_constant(PolynomialKernel{2,2}), 2) == 2.78
-@test round(density_bandwidth_constant(PolynomialKernel{2,4}), 2) == 3.39
-@test round(density_bandwidth_constant(PolynomialKernel{2,6}), 2) == 3.84
-@test round(density_bandwidth_constant(PolynomialKernel{3,2}), 2) == 3.15
-@test round(density_bandwidth_constant(PolynomialKernel{3,4}), 2) == 3.72
-@test round(density_bandwidth_constant(PolynomialKernel{3,6}), 2) == 4.13
-@test round(density_bandwidth_constant(GaussianKernel{2}), 2) == 1.06
-@test round(density_bandwidth_constant(GaussianKernel{4}), 2) == 1.08
-@test round(density_bandwidth_constant(GaussianKernel{6}), 2) == 1.08
+@test round(density_bandwidth_constant(PolynomialKernel{1,2}), digits=2) == 2.34
+@test round(density_bandwidth_constant(PolynomialKernel{1,4}), digits=2) == 3.03
+@test round(density_bandwidth_constant(PolynomialKernel{1,6}), digits=2) == 3.53
+@test round(density_bandwidth_constant(PolynomialKernel{2,2}), digits=2) == 2.78
+@test round(density_bandwidth_constant(PolynomialKernel{2,4}), digits=2) == 3.39
+@test round(density_bandwidth_constant(PolynomialKernel{2,6}), digits=2) == 3.84
+@test round(density_bandwidth_constant(PolynomialKernel{3,2}), digits=2) == 3.15
+@test round(density_bandwidth_constant(PolynomialKernel{3,4}), digits=2) == 3.72
+@test round(density_bandwidth_constant(PolynomialKernel{3,6}), digits=2) == 4.13
+@test round(density_bandwidth_constant(GaussianKernel{2}), digits=2) == 1.06
+@test round(density_bandwidth_constant(GaussianKernel{4}), digits=2) == 1.08
+@test round(density_bandwidth_constant(GaussianKernel{6}), digits=2) == 1.08

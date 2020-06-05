@@ -1,7 +1,7 @@
 name = "HigherOrderKernels"
 uuid = "451eba6f-1be1-5dbe-8902-f773bf8b6763"
 authors = ["Godisemo <carl.akerlindh@gmail.com>"]
-version = "0.1.0"
+version = "0.2.0"
 
 [deps]
 GaussQuadrature = "d54b0c1a-921d-58e0-8e36-89d8069c0969"
@@ -10,4 +10,12 @@ SpecialFunctions = "276daf66-3868-5448-9aa4-cd146d93841b"
 Statistics = "10745b16-79ce-11e8-11f9-7d13ad32a3b2"
 
 [compat]
-julia = "1.0"
+GaussQuadrature = "0.5.0"
+Polynomials = "1.0.0"
+julia = "1.2.0"
+
+[extras]
+Test = "8dfed614-e22c-5e08-85e1-65c5234f0b40"
+
+[targets]
+test = ["Test"]
